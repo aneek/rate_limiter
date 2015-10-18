@@ -1,0 +1,6 @@
+rate_limiter.admin:
+  title: 'Rate Limiter Configurations'
+  description: 'Configure Rate limiter settings'
+  parent: system.admin_config_services
+  route_name: rate_limiter.configuration
+  weight: 5

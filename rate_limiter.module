@@ -1,0 +1,5 @@
+<?php
+/**
+ * @file
+ * Contains the Rate Limiter module functions and hooks.
+ */

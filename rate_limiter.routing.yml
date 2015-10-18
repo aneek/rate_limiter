@@ -1,0 +1,7 @@
+rate_limiter.configuration:
+  path: '/admin/config/services/rate-limiter'
+  defaults:
+    _form: 'Drupal\rate_limiter\Form\RateLimiterConfigForm'
+    _title: 'Rate Limiter Configuration'
+  requirements:
+    _permission: 'administer site configuration'
