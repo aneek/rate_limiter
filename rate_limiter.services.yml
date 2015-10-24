@@ -1,0 +1,10 @@
+services:
+  rate_limiter.manager:
+    class: Drupal\rate_limiter\RateLimitManager
+    tags:
+      - { name: backend_overridable }
+  rate_limiter.middleware:
+    class: Drupal\rate_limiter\RateLimitMiddleware
+    arguments: ['@rate_limiter.manager']
+    tags:
+      - { name: http_middleware, priority: 400 }
