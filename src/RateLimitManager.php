@@ -97,6 +97,6 @@ class RateLimitManager implements RateLimitManagerInterface {
 
   protected function rateLimitAll() {
     $cache = \Drupal::cache()->get('rate_limiter.global');
-    
+
   }
 }
