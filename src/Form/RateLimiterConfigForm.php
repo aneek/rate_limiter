@@ -10,6 +10,7 @@ use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Drupal\rate_limiter\RateLimitManager;
 
 /**
  * Rate Limiter configuration form.
@@ -31,20 +32,6 @@ class RateLimiterConfigForm extends ConfigFormBase {
    * @var string
    */
   private $configName = 'rate_limiter.settings';
-
-  /**
-   * Enable rate limiting for all requests including anonymous access to API.
-   *
-   * @var constant
-   */
-  const ENABLE_GLOBAL = 0;
-
-  /**
-   * Enable rate limiting based on IP addresses.
-   *
-   * @var constant
-   */
-  const ENABLE_IP = 1;
 
   /**
    * Constructs a SiteInformationForm object.
@@ -147,10 +134,7 @@ class RateLimiterConfigForm extends ConfigFormBase {
       '#type' => 'radios',
       '#title' => $this->t('Rate limiting rule'),
       '#description' => $this->t('Select whether rate limit all requests or selective requests.'),
-      '#options' => [
-        self::ENABLE_GLOBAL => $this->t('Rate limit all requests'),
-        self::ENABLE_IP => $this->t('Rate limit based on IP address')
-      ],
+      '#options' => RateLimitManager::availableLimitOptions(),
       '#required' => TRUE,
       '#default_value' => $rate_limiter_config->get('limiting_rule'),
     ];
@@ -162,7 +146,7 @@ class RateLimiterConfigForm extends ConfigFormBase {
       '#weight' => 1,
       '#states' => [
         'visible' => [
-          ':input[name="limiting_rule"]' => array('value' => self::ENABLE_IP),
+          ':input[name="limiting_rule"]' => array('value' => 1),
         ],
       ],
     ];

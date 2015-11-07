@@ -7,13 +7,26 @@
 namespace Drupal\rate_limiter;
 
 use Symfony\Component\HttpFoundation\HeaderBag;
-
+use Symfony\Component\HttpFoundation\Request;
 /**
  * Provides an interface to RateLimitmanager.
  *
  * @package Drupal\rate_limiter
  */
 interface RateLimitManagerInterface {
+
+  /**
+   * Method returns the rate limiting options.
+   *
+   * This method is mainly for Form API. Currently the below are the supported
+   * options.
+   *   - Enable rate limit for all requests.
+   *   - Enable rate limit based on IP address.
+   *
+   * @return array
+   *   An associative array of rate limiting options.s
+   */
+  public static function availableLimitOptions();
 
   /**
    * Method checks if the Rate Limiter is enabled or not.
@@ -24,18 +37,19 @@ interface RateLimitManagerInterface {
   public function isEnabled();
 
   /**
-   * Method checks if the request from service or simple text/html request.
+   * Method checks if the request is for Service endpoint URL or not.
    *
-   * It is assumed that if a URI call has "text/html" in the header then the
-   * request is a usual call to the Drupal site. This should not be a service
-   * call since the service calls mainly accepts different "Accept" headers.
+   * First check if the request is an AJAX request or not. If not AJAX request
+   * then if the Request header has "text/html" we can assume that this is a
+   * basic drupal page access.
    *
-   * @param \Symfony\Component\HttpFoundation\HeaderBag $header
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   The Request instance.
    *
    * @return bool
    *   Returns TRUE if this is a service request or FALSE.
    */
-  public function isServiceRequest(HeaderBag $header);
+  public function isServiceRequest(Request $request);
 
   /**
    * Method scans the Accept header present in Request header.
@@ -47,32 +61,4 @@ interface RateLimitManagerInterface {
    */
   public function acceptType(HeaderBag $header);
 
-  /**
-   * Method returns the Rate limiting Rule.
-   *
-   * The rule contains below options.
-   *   - Rate limit all request.
-   *   - Rate limit based on IP address.
-   *
-   * @return int
-   *   The rate limiting rule.
-   */
-  public function getRateLimitingRule();
-
-  /**
-   * This method limits the rate of accessing service endpoints.
-   *
-   * While limiting the service calls this method follows the below execution
-   * steps.
-   *   - Determines the rate limiting rule.
-   *   - Once the rule is determined then calls the appropriate method to store
-   *     rate limiting values.
-   *   - If the rate limiting threshold is exceeded then a boolean value is
-   *     returned. In case of threshold overflow this returns TRUE else FALSE.
-   *   - Checks if the cooling time for next request is reached then resets the
-   *     rate limiting counter.
-   *
-   * @return mixed
-   */
-  public function limitRequests();
 }

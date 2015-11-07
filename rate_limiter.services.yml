@@ -8,3 +8,9 @@ services:
     arguments: ['@rate_limiter.manager']
     tags:
       - { name: http_middleware, priority: 400 }
+  cache.ratelimit:
+      class: Drupal\Core\Cache\CacheBackendInterface
+      tags:
+        - { name: cache.bin }
+      factory: cache_factory:get
+      arguments: [ratelimit]

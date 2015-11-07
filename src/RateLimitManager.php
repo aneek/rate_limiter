@@ -7,8 +7,8 @@
 namespace Drupal\rate_limiter;
 
 use Symfony\Component\HttpFoundation\AcceptHeader;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\HeaderBag;
-use Drupal\Core\Cache\CacheBackendInterface;
 
 /**
  * Rate Limiting Manager.
@@ -25,10 +25,41 @@ class RateLimitManager implements RateLimitManagerInterface {
   protected $rateLimitingConfig;
 
   /**
+   * Enable rate limiting for all requests including anonymous access to API.
+   *
+   * @var const
+   */
+  const RATE_LIMIT_ALL_REQUEST = 0;
+
+  /**
+   * Enable rate limiting based on IP addresses.
+   *
+   * @var constant
+   */
+  const RATE_LIMIT_ON_IP = 1;
+
+  /**
+   * Rate limiter global cache id.
+   *
+   * @var constant
+   */
+  const RATE_LIMIT_GLOBAL_CID = 'rate_limiter.global';
+
+  /**
    * Class Constructor.
    */
   public function __construct() {
     $this->rateLimitingConfig = \Drupal::config('rate_limiter.settings');
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function availableLimitOptions() {
+    return [
+      self::RATE_LIMIT_ALL_REQUEST => t('Rate limit all requests'),
+      self::RATE_LIMIT_ON_IP => t('Rate limit based on IP address'),
+    ];
   }
 
   /**
@@ -41,13 +72,19 @@ class RateLimitManager implements RateLimitManagerInterface {
   /**
    * {@inheritdoc}
    */
-  public function isServiceRequest(HeaderBag $header) {
-    $accept = AcceptHeader::fromString($header->get('Accept'));
-    if ($accept->has('text/html')) {
-      return FALSE;
+  public function isServiceRequest(Request $request) {
+    // The request is not an AJAX request.
+    if (!$request->isXmlHttpRequest()) {
+      $requestHeaders = $request->headers;
+      $accept = AcceptHeader::fromString($requestHeaders->get('Accept'));
+      if ((string) $accept->filter('/\btext\/\b/')->first() == 'text/html') {
+        return FALSE;
+      }
+      elseif ($this->acceptType($requestHeaders) !== NULL) {
+        return TRUE;
+      }
     }
-    // @todo: Find a better way to validate requests against each service call.
-    return TRUE;
+    return FALSE;
   }
 
   /**
@@ -71,32 +108,4 @@ class RateLimitManager implements RateLimitManagerInterface {
     return $type;
   }
 
-  /**
-   * {@inheritdoc}
-   */
-  public function getRateLimitingRule() {
-    return (int) $this->rateLimitingConfig->get('limiting_rule');
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function limitRequests() {
-    // Check which rate limiting rule is enabled.
-    $limitOption = $this->getRateLimitingRule();
-    // If the option is global rate limiter then we only need a simple cache
-    // store.
-    $this->rateLimitAll();
-    \Drupal::cache()->set('my_value', ['A', 'B'], CacheBackendInterface::CACHE_PERMANENT, ['my_first_tag']);
-
-    $a = \Drupal::cache()->get('my_value');
-    var_dump($a);
-    return TRUE;
-  }
-
-
-  protected function rateLimitAll() {
-    $cache = \Drupal::cache()->get('rate_limiter.global');
-
-  }
 }

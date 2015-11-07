@@ -10,6 +10,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 /**
  * Rate Limiter Middleware.
@@ -52,20 +53,13 @@ class RateLimitMiddleware implements HttpKernelInterface {
     $enabled = $this->manager->isEnabled();
     // Only run the rate limiter if it's enabled.
     if ($enabled === TRUE) {
-      $service_request = $this->manager->isServiceRequest($request->headers);
+      $service_request = $this->manager->isServiceRequest($request);
       // If this is a Web Service request then run the rate limiter service.
       if ($service_request === TRUE) {
-        $limit = $this->manager->limitRequests();
-        $acceptType = $this->manager->acceptType($request->headers);
-        var_dump($acceptType);
-        if ($limit === TRUE) {
-          // @todo: Move this to manager.
-          $message = 'Too many requests';
-          return $this->respond($acceptType, $message, 429);
-        }
+        // Enable the Rate limiting service.
+        //throw new HttpException(404, 'AAAAAA');
       }
     }
-
     return $this->app->handle($request, $type, $catch);
   }
 
