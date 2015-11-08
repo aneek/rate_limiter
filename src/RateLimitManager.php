@@ -117,12 +117,12 @@ class RateLimitManager implements RateLimitManagerInterface {
     }
     // The request is not an AJAX request.
     if (!$request->isXmlHttpRequest()) {
-      $requestHeaders = $request->headers;
-      $accept = AcceptHeader::fromString($requestHeaders->get('Accept'));
+      $request_headers = $request->headers;
+      $accept = AcceptHeader::fromString($request_headers->get('Accept'));
       if ((string) $accept->filter('/\btext\/\b/')->first() == 'text/html') {
         return FALSE;
       }
-      elseif ($this->acceptType($requestHeaders) !== NULL) {
+      elseif ($this->acceptType($request_headers) !== NULL) {
         return TRUE;
       }
     }
@@ -191,6 +191,7 @@ class RateLimitManager implements RateLimitManagerInterface {
    * Method returns the current bucket.
    *
    * @return array
+   *   The current bucket.
    */
   protected function getBucket() {
     if ($cached = \Drupal::cache(self::RATE_LIMIT_CACHE_BIN)->get($this->cid)) {
@@ -210,19 +211,19 @@ class RateLimitManager implements RateLimitManagerInterface {
     // will be empty.
     $this->bucket['drops'] = $this->bucket['drops'] ?: 0;
     $this->bucket['drops']++;
-    $requestTime = time();
-    $this->bucket['request_time'] = $requestTime;
-    $this->bucket['bucket_flush_time'] = $this->bucket['bucket_flush_time'] ?: $requestTime + (int) $this->rateLimitingConfig->get('time_cap');
+    $request_time = time();
+    $this->bucket['request_time'] = $request_time;
+    $this->bucket['bucket_flush_time'] = $this->bucket['bucket_flush_time'] ?: $request_time + (int) $this->rateLimitingConfig->get('time_cap');
 
     // If the bucket flush time is lapsed then reset the counter.
     if ($this->bucket['request_time'] > $this->bucket['bucket_flush_time']) {
       $this->bucket['drops'] = 1;
-      $this->bucket['bucket_flush_time'] = $requestTime + (int) $this->rateLimitingConfig->get('time_cap');
+      $this->bucket['bucket_flush_time'] = $request_time + (int) $this->rateLimitingConfig->get('time_cap');
     }
 
     // Once the bucket data is stored, check if it's overflowing or not.
-    $allowedDrops = $this->rateLimitingConfig->get('requests');
-    if ($this->bucket['drops'] > $allowedDrops && $this->bucket['request_time'] < $this->bucket['bucket_flush_time']) {
+    $allowed_drops = $this->rateLimitingConfig->get('requests');
+    if ($this->bucket['drops'] > $allowed_drops && $this->bucket['request_time'] < $this->bucket['bucket_flush_time']) {
       $this->overflowing = TRUE;
     }
 
@@ -239,6 +240,7 @@ class RateLimitManager implements RateLimitManagerInterface {
    * Denotes if the bucket is overflowing or not.
    *
    * @return bool
+   *   If the current bucket is overflowing or not.
    */
   protected function isOverflowing() {
     return $this->overflowing;
@@ -248,6 +250,7 @@ class RateLimitManager implements RateLimitManagerInterface {
    * Method returns the whitelisted IPs.
    *
    * @return array
+   *   Returns any white listed IPs.
    */
   protected function getWhiteListedIps() {
     return array_map('trim', array_filter(explode(PHP_EOL, unserialize($this->rateLimitingConfig->get('whitelist')))));
@@ -269,4 +272,5 @@ class RateLimitManager implements RateLimitManagerInterface {
       return new Response($message, Response::HTTP_TOO_MANY_REQUESTS, $headers);
     }
   }
+
 }

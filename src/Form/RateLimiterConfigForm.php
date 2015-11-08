@@ -37,6 +37,7 @@ class RateLimiterConfigForm extends ConfigFormBase {
    * Constructs a SiteInformationForm object.
    *
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
+   *   The configuration factory.
    */
   public function __construct(ConfigFactoryInterface $config_factory) {
     parent::__construct($config_factory);
@@ -168,4 +169,5 @@ class RateLimiterConfigForm extends ConfigFormBase {
       ->save();
     parent::submitForm($form, $form_state);
   }
+
 }

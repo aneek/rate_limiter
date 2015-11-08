@@ -8,7 +8,6 @@ namespace Drupal\rate_limiter;
 
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
-use Symfony\Component\HttpKernel\Exception\HttpException;
 
 /**
  * Rate Limiter Middleware.
@@ -35,9 +34,9 @@ class RateLimitMiddleware implements HttpKernelInterface {
    * Constructs Rate Limiter Middleware.
    *
    * @param \Symfony\Component\HttpKernel\HttpKernelInterface $app
-   *   The wrapper HTTP kernel
+   *   The wrapper HTTP kernel.
    * @param \Drupal\rate_limiter\RateLimitManagerInterface $manager
-   *   The rate limiter manager interface
+   *   The rate limiter manager interface.
    */
   public function __construct(HttpKernelInterface $app, RateLimitManagerInterface $manager) {
     $this->app = $app;
@@ -63,22 +62,6 @@ class RateLimitMiddleware implements HttpKernelInterface {
       }
     }
     return $this->app->handle($request, $type, $catch);
-  }
-
-  /**
-   * @param string $type
-   * @param string $message
-   * @param int $status
-   *
-   * @return \Symfony\Component\HttpFoundation\JsonResponse|\Symfony\Component\HttpFoundation\Response
-   */
-  protected function respond($type = 'json', $message = '', $status = 429) {
-    if (in_array($type, ['json', 'hal_json'])) {
-      return new JsonResponse(['message' => $message], $status);
-    }
-    else {
-      return new Response($message, $status);
-    }
   }
 
 }
