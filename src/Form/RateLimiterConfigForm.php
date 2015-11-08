@@ -110,19 +110,6 @@ class RateLimiterConfigForm extends ConfigFormBase {
       '#required' => TRUE,
     ];
 
-    $form['basic']['retry_after'] = [
-      '#type' => 'number',
-      '#title' => $this->t('Retry after time'),
-      '#description' => $this->t('The time frame after requests will be again accepted.'),
-      '#attributes' => [
-        'min' => 60,
-        'step' => 60,
-      ],
-      '#field_suffix' => $this->t('<em>In seconds</em>'),
-      '#default_value' => $rate_limiter_config->get('retry_after'),
-      '#required' => TRUE,
-    ];
-
     $form['access'] = [
       '#type' => 'details',
       '#title' => $this->t('Access Rules'),
@@ -154,7 +141,7 @@ class RateLimiterConfigForm extends ConfigFormBase {
     $form['access']['ip_configuration']['whitelist'] = [
       '#type' => 'textarea',
       '#title' => $this->t('IP whitelist'),
-      '#description' => $this->t('White list single IPs (127.0.0.1) or IP CIDR (127.0.0.1/24) in new lines.'),
+      '#description' => $this->t('IP listing for white listing. List IPs in new lines.'),
       '#default_value' => unserialize($rate_limiter_config->get('whitelist')),
     ];
 
@@ -176,7 +163,6 @@ class RateLimiterConfigForm extends ConfigFormBase {
       ->set('enable', $form_state->getValue('enable'))
       ->set('requests', $form_state->getValue('requests'))
       ->set('time_cap', $form_state->getValue('time_cap'))
-      ->set('retry_after', $form_state->getValue('retry_after'))
       ->set('limiting_rule', $form_state->getValue('limiting_rule'))
       ->set('whitelist', serialize($form_state->getValue('whitelist')))
       ->save();

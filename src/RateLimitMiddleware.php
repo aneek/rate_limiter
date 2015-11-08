@@ -7,8 +7,6 @@
 namespace Drupal\rate_limiter;
 
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
@@ -56,8 +54,12 @@ class RateLimitMiddleware implements HttpKernelInterface {
       $service_request = $this->manager->isServiceRequest($request);
       // If this is a Web Service request then run the rate limiter service.
       if ($service_request === TRUE) {
-        // Enable the Rate limiting service.
-        //throw new HttpException(404, 'AAAAAA');
+        // If this is a service request and the rate limiter service is enabled
+        // then get all the settings and send it to rate limiter manager.
+        $limit = $this->manager->limit($request);
+        if ($limit === TRUE) {
+          return $this->manager->respond();
+        }
       }
     }
     return $this->app->handle($request, $type, $catch);
@@ -78,4 +80,5 @@ class RateLimitMiddleware implements HttpKernelInterface {
       return new Response($message, $status);
     }
   }
+
 }

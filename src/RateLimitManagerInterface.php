@@ -61,4 +61,34 @@ interface RateLimitManagerInterface {
    */
   public function acceptType(HeaderBag $header);
 
+  /**
+   * Method used to limit the service requests.
+   *
+   * This method has the following steps to execute.
+   *   - Checks which 'limiting_rule' is set.
+   *   - Based on the rule, sets the cache id and the tags.
+   *   - If IP white listing is enabled then checks if the client IP exists in
+   *     the white list array. If present then services are not restricted. Else
+   *     the method uses leakey bucket algorithm to rate limit each request.
+   *
+   * The Rate limiting is based on 'Leakey Bucket' algorithm.
+   * @see https://en.wikipedia.org/wiki/Leaky_bucket
+   * The bucket has an overflow limit and a flush time. When the flush time is
+   * reached then the bucket becomes empty. Till the bucket is not flushed it
+   * stores each drop of requests. Once the bucket becomes full and overflows
+   * the next request has to wait for a certain time period till the bucket is
+   * empty again.
+   *
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *
+   * @return bool
+   */
+  public function limit(Request $request);
+
+  /**
+   * Method responds if the rate limit is reached.
+   *
+   * @return \Symfony\Component\HttpFoundation\JsonResponse|\Symfony\Component\HttpFoundation\Response
+   */
+  public function respond();
 }
