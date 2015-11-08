@@ -3,3 +3,6 @@ description: 'Rate limiter module limits call to the exposed Web services'
 core: 8.x
 type: module
 package: Web services
+dependencies:
+  - rest
+  - serialization
