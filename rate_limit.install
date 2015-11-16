@@ -1,0 +1,13 @@
+<?php
+/**
+ * @file
+ * Contains the Schema hooks for Rate limiter module.
+ */
+
+/**
+ * Implements hook_uninstall().
+ */
+function rate_limit_uninstall() {
+  // Clear all the items stored in the cache.
+  \Drupal::cache('ratelimit')->deleteAll();
+}
