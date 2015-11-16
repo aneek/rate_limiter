@@ -111,6 +111,15 @@ class RateLimiterConfigForm extends ConfigFormBase {
       '#required' => TRUE,
     ];
 
+    $form['basic']['message'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Response Message'),
+      '#description' => $this->t('This message will be shown as response when the limit is reached.'),
+      '#maxlength' => 255,
+      '#size' => 100,
+      '#default_value' => $rate_limiter_config->get('message'),
+    ];
+
     $form['access'] = [
       '#type' => 'details',
       '#title' => $this->t('Access Rules'),
@@ -164,6 +173,7 @@ class RateLimiterConfigForm extends ConfigFormBase {
       ->set('enable', $form_state->getValue('enable'))
       ->set('requests', $form_state->getValue('requests'))
       ->set('time_cap', $form_state->getValue('time_cap'))
+      ->set('message', $form_state->getValue('message'))
       ->set('limiting_rule', $form_state->getValue('limiting_rule'))
       ->set('whitelist', serialize($form_state->getValue('whitelist')))
       ->save();

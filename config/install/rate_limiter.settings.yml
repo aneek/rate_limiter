@@ -5,6 +5,8 @@ enable: 0
 requests: 10
 # Allow number of requests in the given time window; defaults to 3600 sec.
 time_cap: 3600
+# The message when the rate is reached.
+message: ''
 # Rate limiting rule. Defaults to checking all Web-service requests.
 limiting_rule: 0
 # Default IP white list.
