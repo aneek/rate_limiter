@@ -261,7 +261,11 @@ class RateLimitManager implements RateLimitManagerInterface {
    */
   public function respond() {
     $type = $this->acceptType($this->request->headers);
-    $message = empty($this->rateLimitingConfig->get('message')) ? 'Too many requests' : $this->rateLimitingConfig->get('message');
+    $default_message = $this->rateLimitingConfig->get('message');
+    $message = 'Too many requests';
+    if (!empty($default_message)) {
+      $message = $default_message;
+    }
     // Set the retry after header.
     $retry = $this->bucket['bucket_flush_time'] - $this->bucket['request_time'];
     $headers = ['Retry-After' => $retry];
