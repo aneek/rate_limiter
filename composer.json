@@ -1,0 +1,5 @@
+{
+  "name": "drupal/rate_limiter",
+  "description": "Rate Limiter for Webservice requests.",
+  "type": "drupal-module"
+}

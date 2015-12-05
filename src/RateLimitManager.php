@@ -261,14 +261,15 @@ class RateLimitManager implements RateLimitManagerInterface {
    */
   public function respond() {
     $type = $this->acceptType($this->request->headers);
-    $default_message = $this->rateLimitingConfig->get('message');
+    $custom_message = $this->rateLimitingConfig->get('message');
     $message = 'Too many requests';
     if (!empty($default_message)) {
-      $message = $default_message;
+      $message = $custom_message;
     }
     // Set the retry after header.
     $retry = $this->bucket['bucket_flush_time'] - $this->bucket['request_time'];
     $headers = ['Retry-After' => $retry];
+    // If request header requested for JSON data then respond with JSON.
     if (in_array($type, ['json', 'hal_json'])) {
       return new JsonResponse(['message' => $message], Response::HTTP_TOO_MANY_REQUESTS, $headers);
     }

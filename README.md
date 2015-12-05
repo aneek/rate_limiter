@@ -14,17 +14,14 @@
 ------------------
 *Rate Limiter* module can be useful when to disallow concurrent web service access to the application. 
 
-
 ##### Requirements
 ------------------
 * RESTful Web Services
 * Serialization
 
-
 ##### Installation
 ------------------
 Follow [installation](https://www.drupal.org/documentation/install/modules-themes/modules-8) guide to install the module into the site.
-
 
 ##### Configuration
 ------------------
@@ -43,6 +40,5 @@ The configuration has two segments.
 
 ##### Maintainer(s)
 ------------------
-
 ###### Current maintainer
 * Aneek Mukhopadhyay (aneek) - https://www.drupal.org/u/aneek

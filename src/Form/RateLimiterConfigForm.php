@@ -11,6 +11,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\rate_limiter\RateLimitManager;
+use Symfony\Component\Validator\Constraints\IpValidator;
 
 /**
  * Rate Limiter configuration form.
@@ -162,7 +163,24 @@ class RateLimiterConfigForm extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
+    // The IP should be valid.
+    if (!empty($ip_lists = $form_state->getValue('whitelist'))) {
+      // Make the list as an array.
+      $ip_array = explode(PHP_EOL, $ip_lists);
+      // Trim each IP element.
+      $ip_array = array_map('trim', $ip_array);
 
+      // Iterate each IP and check if it's valid.
+      foreach ($ip_array as $ip) {
+        if (!filter_var($ip, FILTER_VALIDATE_IP)) {
+          $invalid_ip = $ip;
+          break;
+        }
+      }
+      if (isset($invalid_ip)) {
+        $form_state->setErrorByName('whitelist', $this->t('The IP @ip is not valid', ['@ip' => $invalid_ip]));
+      }
+    }
   }
 
   /**
