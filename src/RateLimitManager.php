@@ -263,7 +263,7 @@ class RateLimitManager implements RateLimitManagerInterface {
     $type = $this->acceptType($this->request->headers);
     $custom_message = $this->rateLimitingConfig->get('message');
     $message = 'Too many requests';
-    if (!empty($default_message)) {
+    if (!empty($custom_message)) {
       $message = $custom_message;
     }
     // Set the retry after header.

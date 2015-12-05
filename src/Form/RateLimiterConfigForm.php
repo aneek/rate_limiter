@@ -11,7 +11,6 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\rate_limiter\RateLimitManager;
-use Symfony\Component\Validator\Constraints\IpValidator;
 
 /**
  * Rate Limiter configuration form.

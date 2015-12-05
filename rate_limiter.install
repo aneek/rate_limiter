@@ -7,7 +7,7 @@
 /**
  * Implements hook_uninstall().
  */
-function rate_limit_uninstall() {
+function rate_limiter_uninstall() {
   // Clear all the items stored in the cache.
   \Drupal::cache('ratelimit')->deleteAll();
 }
