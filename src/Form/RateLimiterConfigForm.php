@@ -177,7 +177,7 @@ class RateLimiterConfigForm extends ConfigFormBase {
         }
       }
       if (isset($invalid_ip)) {
-        $form_state->setErrorByName('whitelist', $this->t('The IP @ip is not valid', ['@ip' => $invalid_ip]));
+        $form_state->setErrorByName('whitelist', $this->t('The IP @ip is not valid. Only mention a single IP address on each line.', ['@ip' => $invalid_ip]));
       }
     }
   }
