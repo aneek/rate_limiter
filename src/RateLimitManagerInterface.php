@@ -53,17 +53,6 @@ interface RateLimitManagerInterface {
   public function isServiceRequest(Request $request);
 
   /**
-   * Method scans the Accept header present in Request header.
-   *
-   * @param \Symfony\Component\HttpFoundation\HeaderBag $header
-   *   The request header instance.
-   *
-   * @return string
-   *   The accept header type.
-   */
-  public function acceptType(HeaderBag $header);
-
-  /**
    * Method used to limit the service requests.
    *
    * @param \Symfony\Component\HttpFoundation\Request $request

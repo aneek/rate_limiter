@@ -101,6 +101,31 @@ class RateLimitManager implements RateLimitManagerInterface {
   }
 
   /**
+   * Method returns the allowed response formats.
+   *
+   * @return array
+   *   Allowed Response formats.
+   */
+  public static function allowedResponseFormats() {
+    return ['json', 'hal_json', 'xml'];
+  }
+
+  /**
+   * Method returns an associative array of allowed accept header types.
+   *
+   * @return array
+   *   Associative array of allowd accept header types.
+   */
+  public static function allowedAcceptTypes() {
+    return [
+      'application/json' => 'json',
+      'application/hal+json' => 'hal_json',
+      'application/xml' => 'xml',
+      'text/html' => 'html',
+    ];
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function isEnabled() {
@@ -117,6 +142,18 @@ class RateLimitManager implements RateLimitManagerInterface {
     }
     // The request is not an AJAX request.
     if (!$request->isXmlHttpRequest()) {
+      // First check for "_format" query parameter as this is now accepted by
+      // Drupal "Accept header based routing got replaced by a query parameter"
+      // @see https://www.drupal.org/node/2501221
+      if (($request->query->has('_format'))) {
+        $format = $request->query->get('_format');
+        // If the format lies within the allowed formats then return true else
+        // return false.
+        if (in_array($format, self::allowedResponseFormats())) {
+          return TRUE;
+        }
+      }
+      // If we need to check the header.
       $request_headers = $request->headers;
       $accept = AcceptHeader::fromString($request_headers->get('Accept'));
       if ((string) $accept->filter('/\btext\/\b/')->first() == 'text/html') {
@@ -126,22 +163,26 @@ class RateLimitManager implements RateLimitManagerInterface {
         return TRUE;
       }
     }
+    elseif ($request->get('ajax_iframe_upload', FALSE)) {
+      // Ajax iframe upload should return false.
+      return FALSE;
+    }
     return FALSE;
   }
 
   /**
-   * {@inheritdoc}
+   * Method scans the Accept header present in Request header.
+   *
+   * @param \Symfony\Component\HttpFoundation\HeaderBag $header
+   *   The request header instance.
+   *
+   * @return string
+   *   The accept header type.
    */
-  public function acceptType(HeaderBag $header) {
-    $mapping = [
-      'application/json' => 'json',
-      'application/hal+json' => 'hal_json',
-      'application/xml' => 'xml',
-      'text/html' => 'html',
-    ];
+  private function acceptType(HeaderBag $header) {
     $type = NULL;
     $accept = AcceptHeader::fromString($header->get('Accept'));
-    foreach ($mapping as $header => $name) {
+    foreach (self::allowedAcceptTypes() as $header => $name) {
       if ($accept->has($header)) {
         $type = $name;
         break;
