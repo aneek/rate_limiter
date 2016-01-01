@@ -60,9 +60,10 @@ white listing option available.
 ------------------
 The following points were assumed while developing the module.
 
-1. Every Web-service call will have "Accept" header mentioned.
+1. Every Web-service call either have "Accept" header or "_format" query string.
 2. The Rate Limiting service will only work on requests with 
-"application/json", "application/xml" and "application/hal+json" accept headers.
+"application/json", "application/xml" and "application/hal+json" `Accept` headers
+or `_format` query string with "json", "hal_json" and "xml" values.
 3. Command line requests and "text/html" requests are considered as normal
 drupal requests to the site not as Service calls.
 
@@ -74,7 +75,7 @@ Assumed that in a production environment caches are not cleared more often.
 
 ##### Future Improvements
 ------------------
-* Enable Bearer Token based Rate limiting service with [OAuth2 Server](https://www.drupal.org/project/oauth2_server) module.
+* Enable *Bearer Token* based Rate limiting service with [OAuth2 Server](https://www.drupal.org/project/oauth2_server) module.
 * Based on Feature Requests more improvements.
 * Integration test suite for testing Rate Limiting service.
 
