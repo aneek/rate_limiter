@@ -143,7 +143,7 @@ class RateLimitManager implements RateLimitManagerInterface {
     // The request is not an AJAX request.
     if (!$request->isXmlHttpRequest()) {
       // First check for "_format" query parameter as this is now accepted by
-      // Drupal "Accept header based routing got replaced by a query parameter"
+      // Drupal (Accept header based routing got replaced by a query parameter).
       // @see https://www.drupal.org/node/2501221
       if (($request->query->has('_format'))) {
         $format = $request->query->get('_format');

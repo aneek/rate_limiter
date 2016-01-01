@@ -26,6 +26,8 @@ This service features:
 * Limit hits based on IP address.
 * IP White listing option.
 * Defines a separate cache bin to store the rate limiter hits and counts.
+* Exportable configurations.
+* Supports `Accept` HTTP headers and Drupal recommended `_format` calls. 
 
 ##### Requirements
 ------------------
@@ -83,4 +85,7 @@ Assumed that in a production environment caches are not cleared more often.
  
 ##### Change Log
 ------------------
-* 8.0-1.0 - Initial version created.
+* 8.x-1.0 - Initial version created.
+* 8.x-1.1 - Improvements over "Accept header based routing".
+  * Based on [#2501221](https://www.drupal.org/node/2501221) now supports `_format` to determine a service request
+    and Response.
