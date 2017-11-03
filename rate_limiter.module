@@ -3,3 +3,18 @@
  * @file
  * Contains the Rate Limiter module functions and hooks.
  */
+
+use Drupal\Core\Routing\RouteMatchInterface;
+
+/**
+ * Implements hook_help().
+ */
+function rate_limiter_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    case 'help.page.rate_limiter':
+      $output = '';
+      $output .= '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('The Rate Limiter module provides a service for limits concurrent constant requests to the web-service calls in the application.') . '</p>';
+      return $output;
+  }
+}

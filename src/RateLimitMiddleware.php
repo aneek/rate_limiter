@@ -1,8 +1,4 @@
 <?php
-/**
- * @file
- * Contains \Drupal\rate_limiter\RateLimitMiddleware.
- */
 
 namespace Drupal\rate_limiter;
 
@@ -12,7 +8,7 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
 /**
  * Rate Limiter Middleware.
  *
- * @package Drupal\rate_limiter
+ * @package rate_limiter
  */
 class RateLimitMiddleware implements HttpKernelInterface {
 

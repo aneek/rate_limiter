@@ -11,3 +11,14 @@ message: ''
 limiting_rule: 0
 # Default IP white list.
 whitelist: ''
+# Default storage option.
+storage_option: 'cache'
+# Override default rule.
+override_default_types: 'none'
+# Overridden Query String.
+query_string: ''
+#Overridden Request Header type.
+request_header_type: 'accept'
+#Overridden Request Header Name and Value.
+request_header_name: ''
+request_header_value: ''

@@ -1,8 +1,4 @@
 <?php
-/**
- * @file
- * Contains \Drupal\rate_limiter\RateLimitManager.
- */
 
 namespace Drupal\rate_limiter;
 
@@ -13,11 +9,10 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\HeaderBag;
 use Drupal\Core\Cache\CacheBackendInterface;
 
-
 /**
  * Rate Limiting Manager.
  *
- * @package Drupal\rate_limiter
+ * @package rate_limiter
  */
 class RateLimitManager implements RateLimitManagerInterface {
 
@@ -97,6 +92,19 @@ class RateLimitManager implements RateLimitManagerInterface {
     return [
       self::RATE_LIMIT_ALL_REQUEST => t('Rate limit all requests'),
       self::RATE_LIMIT_ON_IP => t('Rate limit based on IP address'),
+    ];
+  }
+
+  /**
+   * List of available storage options to store the rate limit counter.
+   *
+   * @return array
+   *   An array of available storage options.
+   */
+  public static function availableStorageOptions() {
+    return [
+      'cache' => t('Drupal Cache Bin'),
+      'db' => t('Database table')
     ];
   }
 

@@ -1,8 +1,4 @@
 <?php
-/**
- * @file
- * Contains \Drupal\rate_limiter\Form\RateLimiterConfigForm.
- */
 
 namespace Drupal\rate_limiter\Form;
 
@@ -15,7 +11,7 @@ use Drupal\rate_limiter\RateLimitManager;
 /**
  * Rate Limiter configuration form.
  *
- * @package Drupal\rate_limiter\Form
+ * @package rate_limiter
  */
 class RateLimiterConfigForm extends ConfigFormBase {
 
@@ -78,14 +74,12 @@ class RateLimiterConfigForm extends ConfigFormBase {
       '#open' => TRUE,
       '#weight' => 1,
     ];
-
     $form['basic']['enable'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Enable Rate limiter'),
       '#description' => $this->t('Checking this will enable rate limiter for each service requests.'),
       '#default_value' => $rate_limiter_config->get('enable'),
     ];
-
     $form['basic']['requests'] = [
       '#type' => 'number',
       '#title' => $this->t('Allowed Requests'),
@@ -97,7 +91,6 @@ class RateLimiterConfigForm extends ConfigFormBase {
       '#default_value' => $rate_limiter_config->get('requests'),
       '#required' => TRUE,
     ];
-
     $form['basic']['time_cap'] = [
       '#type' => 'number',
       '#title' => $this->t('Allowed time window'),
@@ -110,7 +103,6 @@ class RateLimiterConfigForm extends ConfigFormBase {
       '#default_value' => $rate_limiter_config->get('time_cap'),
       '#required' => TRUE,
     ];
-
     $form['basic']['message'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Response Message'),
@@ -126,7 +118,6 @@ class RateLimiterConfigForm extends ConfigFormBase {
       '#open' => TRUE,
       '#weight' => 2,
     ];
-
     $form['access']['limiting_rule'] = [
       '#type' => 'radios',
       '#title' => $this->t('Rate limiting rule'),
@@ -135,7 +126,6 @@ class RateLimiterConfigForm extends ConfigFormBase {
       '#required' => TRUE,
       '#default_value' => $rate_limiter_config->get('limiting_rule'),
     ];
-
     // Only show the conditional fields when IP based rate limiting is selected.
     $form['access']['ip_configuration'] = [
       '#type' => 'fieldset',
@@ -143,17 +133,100 @@ class RateLimiterConfigForm extends ConfigFormBase {
       '#weight' => 1,
       '#states' => [
         'visible' => [
-          ':input[name="limiting_rule"]' => array('value' => 1),
+          ':input[name="limiting_rule"]' => ['value' => 1],
         ],
       ],
     ];
-
     $form['access']['ip_configuration']['whitelist'] = [
       '#type' => 'textarea',
       '#title' => $this->t('IP whitelist'),
       '#description' => $this->t('IP listing for white listing. List IPs in new lines.'),
       '#default_value' => unserialize($rate_limiter_config->get('whitelist')),
     ];
+
+    $form['advanced_settings'] = [
+      '#type' => 'details',
+      '#title' => $this->t('Advanced Settings'),
+      '#open' => FALSE,
+      '#weight' => 3,
+    ];
+    $form['advanced_settings']['storage_option'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Storage Option'),
+      '#description' => $this->t('Stores the rate limit counter; By default Drupal\'s cache settings is used.'),
+      '#options' => RateLimitManager::availableStorageOptions(),
+      '#default_value' => $rate_limiter_config->get('storage_option')
+    ];
+    $form['advanced_settings']['override_default_types'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Override API Service Call determination rule'),
+      '#description' => $this->t('This module checks for URL Query string %qs or Accept Headers like %ach in HTTP Request to determine whether this is an API related request or nornal Drupal\'s call. However, this rule can be modified by checking this option. This will merge the existing rules with the new custom added rules.', [
+        '%qs' => '_format=hal_json',
+        '%ach' => implode(', ', array_keys(RateLimitManager::allowedAcceptTypes()))
+      ]),
+      '#options' => [
+        'none' => $this->t('None'),
+        'query_string' => $this->t('New Query String Rule'),
+        'request_header' => $this->t('New Request Header Rule'),
+      ],
+      '#default_value' => $rate_limiter_config->get('override_default_types'),
+    ];
+    $form['advanced_settings']['query_string'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Query String'),
+      '#description' => $this->t('Mention any query string as a key=value format'),
+      '#placeholder' => $this->t('_format=hal_json'),
+      '#default_value' => $rate_limiter_config->get('query_string'),
+      '#states' => [
+        'visible' => [
+          ':input[name="override_default_types"]' => ['value' => 'query_string'],
+        ],
+      ],
+    ];
+
+    $form['advanced_settings']['request_header_type'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Request Header Type'),
+      '#description' => $this->t('The HTTP Request header\'s type'),
+      '#options' => [
+        'accept' => $this->t('Accept'),
+        'other' => $this->t('Other')
+      ],
+      '#default_value' => $rate_limiter_config->get('request_header_type'),
+      '#states' => [
+        'visible' => [
+          ':input[name="override_default_types"]' => ['value' => 'request_header'],
+        ],
+      ],
+    ];
+
+    $form['advanced_settings']['request_header_name'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Request Header Name'),
+      '#description' => $this->t('The HTTP Request header\'s name'),
+      '#default_value' => $rate_limiter_config->get('request_header_name'),
+      '#placeholder' => 'Foobar',
+      '#states' => [
+        'visible' => [
+          ':input[name="override_default_types"]' => ['value' => 'request_header'],
+          ':input[name="request_header_type"]' => ['value' => 'other'],
+        ],
+      ],
+    ];
+
+    $form['advanced_settings']['request_header_value'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Request Header Value'),
+      '#description' => $this->t('The HTTP Request header\'s value to check for'),
+      '#default_value' => $rate_limiter_config->get('request_header_value'),
+      '#placeholder' => 'application/json',
+      '#states' => [
+        'visible' => [
+          ':input[name="override_default_types"]' => ['value' => 'request_header'],
+        ],
+      ],
+    ];
+
 
     return parent::buildForm($form, $form_state);
   }

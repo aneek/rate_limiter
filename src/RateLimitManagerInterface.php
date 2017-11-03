@@ -1,8 +1,4 @@
 <?php
-/**
- * @file
- * Contains \Drupal\rate_limiter\RateLimitManagerInterface.
- */
 
 namespace Drupal\rate_limiter;
 
@@ -11,7 +7,7 @@ use Symfony\Component\HttpFoundation\Request;
 /**
  * Provides an interface to RateLimitmanager.
  *
- * @package Drupal\rate_limiter
+ * @package rate_limiter
  */
 interface RateLimitManagerInterface {
 
