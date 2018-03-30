@@ -227,7 +227,6 @@ class RateLimiterConfigForm extends ConfigFormBase {
       ],
     ];
 
-
     return parent::buildForm($form, $form_state);
   }
 
@@ -253,21 +252,76 @@ class RateLimiterConfigForm extends ConfigFormBase {
         $form_state->setErrorByName('whitelist', $this->t('The IP @ip is not valid. Only mention a single IP address on each line.', ['@ip' => $invalid_ip]));
       }
     }
+
+    // If API Service Call determination rule added, then there should be validation.
+    $override_settings = $form_state->getValue('override_default_types');
+    switch ($override_settings) {
+      case 'query_string':
+        // Query string validation is simple, only check for 'Query String' field.
+        if (empty(trim($form_state->getValue('query_string')))) {
+          $form_state->setErrorByName('query_string', $this->t('If Query String option is selected, then Query String can\'t be blank.'));
+        }
+        break;
+
+      case 'request_header':
+        // Two options are available here. If default 'Accept' header is there, then validate single box else validate two.
+        $request_header_type = $form_state->getValue('request_header_type');
+        if ($request_header_type != 'accept') {
+          if (empty(trim($form_state->getValue('request_header_name')))) {
+            $form_state->setErrorByName('request_header_name', $this->t('If Request Header Type option is selected, then Request Header Name can\'t be blank.'));
+          }
+        }
+        if (empty(trim($form_state->getValue('request_header_value')))) {
+          $form_state->setErrorByName('request_header_value', $this->t('If Request Header Type option is selected, then Request Header Value can\'t be blank.'));
+        }
+        break;
+    }
   }
 
   /**
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    $this->config($this->configName)
-      ->set('enable', $form_state->getValue('enable'))
-      ->set('requests', $form_state->getValue('requests'))
-      ->set('time_cap', $form_state->getValue('time_cap'))
-      ->set('message', $form_state->getValue('message'))
-      ->set('limiting_rule', $form_state->getValue('limiting_rule'))
-      ->set('whitelist', serialize($form_state->getValue('whitelist')))
-      ->save();
-    parent::submitForm($form, $form_state);
+    // Get the previous value, and if that was set, and now it's 0 then reset all fields.
+    $was_set = $this->config($this->configName)->get('enable');
+    $new_value = $form_state->getValue('enable');
+    if ($was_set == 1 && $new_value == 0) {
+      // Trying to remove all settings.
+      // Update all to default values.
+      $this->config($this->configName)
+        ->set('enable', 0)
+        ->set('requests', 10)
+        ->set('time_cap', 3600)
+        ->set('message', '')
+        ->set('limiting_rule', 0)
+        ->set('whitelist', '')
+        ->set('storage_option', 'cache')
+        ->set('override_default_types', 'none')
+        ->set('query_string', '')
+        ->set('request_header_type', 'accept')
+        ->set('request_header_name', '')
+        ->set('request_header_value', '')
+        ->save();
+      parent::submitForm($form, $form_state);
+    }
+    else {
+      // General save.
+      $this->config($this->configName)
+        ->set('enable', $form_state->getValue('enable'))
+        ->set('requests', $form_state->getValue('requests'))
+        ->set('time_cap', $form_state->getValue('time_cap'))
+        ->set('message', $form_state->getValue('message'))
+        ->set('limiting_rule', $form_state->getValue('limiting_rule'))
+        ->set('whitelist', serialize($form_state->getValue('whitelist')))
+        ->set('storage_option', $form_state->getValue('storage_option'))
+        ->set('override_default_types', $form_state->getValue('override_default_types'))
+        ->set('query_string', $form_state->getValue('query_string'))
+        ->set('request_header_type', $form_state->getValue('request_header_type'))
+        ->set('request_header_name', $form_state->getValue('request_header_name'))
+        ->set('request_header_value', $form_state->getValue('request_header_value'))
+        ->save();
+      parent::submitForm($form, $form_state);
+    }
   }
 
 }
