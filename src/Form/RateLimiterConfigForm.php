@@ -150,13 +150,6 @@ class RateLimiterConfigForm extends ConfigFormBase {
       '#open' => FALSE,
       '#weight' => 3,
     ];
-    $form['advanced_settings']['storage_option'] = [
-      '#type' => 'select',
-      '#title' => $this->t('Storage Option'),
-      '#description' => $this->t('Stores the rate limit counter; By default Drupal\'s cache settings is used.'),
-      '#options' => RateLimitManager::availableStorageOptions(),
-      '#default_value' => $rate_limiter_config->get('storage_option')
-    ];
     $form['advanced_settings']['override_default_types'] = [
       '#type' => 'select',
       '#title' => $this->t('Override API Service Call determination rule'),
@@ -165,7 +158,7 @@ class RateLimiterConfigForm extends ConfigFormBase {
         '%ach' => implode(', ', array_keys(RateLimitManager::allowedAcceptTypes()))
       ]),
       '#options' => [
-        'none' => $this->t('None'),
+        'none' => $this->t('Use Default'),
         'query_string' => $this->t('New Query String Rule'),
         'request_header' => $this->t('New Request Header Rule'),
       ],
@@ -313,7 +306,7 @@ class RateLimiterConfigForm extends ConfigFormBase {
         ->set('message', $form_state->getValue('message'))
         ->set('limiting_rule', $form_state->getValue('limiting_rule'))
         ->set('whitelist', serialize($form_state->getValue('whitelist')))
-        ->set('storage_option', $form_state->getValue('storage_option'))
+        ->set('storage_option', 'cache')
         ->set('override_default_types', $form_state->getValue('override_default_types'))
         ->set('query_string', $form_state->getValue('query_string'))
         ->set('request_header_type', $form_state->getValue('request_header_type'))

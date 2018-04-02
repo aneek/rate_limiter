@@ -11,7 +11,7 @@ message: ''
 limiting_rule: 0
 # Default IP white list.
 whitelist: ''
-# Default storage option.
+# Storage option.
 storage_option: 'cache'
 # Override default rule.
 override_default_types: 'none'

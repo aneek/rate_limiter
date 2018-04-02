@@ -1,0 +1,55 @@
+rate_limiter.settings:
+  type: config_object
+  label: 'Rate Limiter Configurations'
+  mapping:
+    enable:
+      type: integer
+      label: 'Enable Rate Limiting Service'
+      translatable: true
+    requests:
+      type: integer
+      label: 'Allowed requests per interval'
+      translatable: true
+    time_cap:
+      type: integer
+      label: 'Time window'
+      translatable: true
+    message:
+      type: string
+      label: 'Message to show to the client system'
+      translatable: true
+    limiting_rule:
+      type: integer
+      label: 'Rate Limiting rule set'
+      translatable: true
+    whitelist:
+      type: string
+      label: 'Default IP White list string'
+      translatable: true
+    storage_option:
+      type: string
+      label: 'Rate limiting count storage option'
+      translatable: true
+    override_default_types:
+      type: string
+      label: 'Overriding settings'
+      translatable: true
+    query_string:
+      type: string
+      label: 'Query String to capture while rate limiting'
+      translatable: true
+    request_header_type:
+      type: string
+      label: 'HTTP Request header type'
+      translatable: true
+    request_header_name:
+      type: string
+      label: 'HTTP Custom Request header name'
+      translatable: true
+    request_header_value:
+      type: string
+      label: 'HTTP Custom Request header value'
+      translatable: true
+    langcode:
+      type: string
+      label: 'Language code'
