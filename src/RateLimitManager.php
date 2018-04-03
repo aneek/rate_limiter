@@ -60,14 +60,14 @@ class RateLimitManager implements RateLimitManagerInterface {
 
   /**
    * Default serialization format options (backward compatibility).
-   * 
+   *
    * Used for '_format' query string.
    *
-   * @link https://www.drupal.org/docs/8/core/modules/rest/1-getting-started-rest-configuration-rest-request-fundamentals
-   *
    * @var array
+   *
+   * @link https://www.drupal.org/docs/8/core/modules/rest/1-getting-started-rest-configuration-rest-request-fundamentals
    */
-  private $default_format = ['json', 'hal_json', 'xml'];
+  private $defaultFormat = ['json', 'hal_json', 'xml'];
 
   /**
    * Enable rate limiting for all requests including anonymous access to API.
@@ -140,26 +140,27 @@ class RateLimitManager implements RateLimitManagerInterface {
     if (!$request->isXmlHttpRequest()) {
       // What option the user selected?
       $selected = $this->rateLimitingConfig->get('override_default_types');
-      // If user selected the default one then query string, 
+      // If user selected the default one then query string,
       // Accept header and Content type will be checked.
       switch ($selected) {
         case 'none':
           return (
-            $this->validateOnQueryString($request) || 
-            $this->validateOnAcceptTypes($request) ||
+            $this->validateOnQueryString($request) ||
+            $this->validateOnHeaderTypes($request) ||
             $this->validateOnContentTypes($request)
           );
-        
+
         case 'query_string':
           return ($this->validateOnQueryString($request) || $this->validateOnContentTypes($request));
-        
+
         case 'request_header':
-          return ($this->validateOnAcceptTypes($request) || $this->validateOnContentTypes($request));
+          return ($this->validateOnHeaderTypes($request) || $this->validateOnContentTypes($request));
       }
     }
     elseif ($request->get('ajax_iframe_upload', FALSE)) {
       return FALSE;
-    } else {
+    }
+    else {
       return FALSE;
     }
   }
@@ -168,22 +169,153 @@ class RateLimitManager implements RateLimitManagerInterface {
    * {@inheritdoc}
    */
   public function limit(Request $request) {
+    $this->request = $request;
+    // Based on the selected Rate limiting rule set the cache and bucket.
+    switch ($this->rateLimitingConfig->get('limiting_rule')) {
+      case self::RATE_LIMIT_ALL_REQUEST:
+        $this->cid = self::RATE_LIMIT_CACHE_PREFIX . 'global';
+        $this->cacheTag = ['rate_limit_global'];
+        break;
 
+      case self::RATE_LIMIT_ON_IP:
+        $ip = $request->getClientIp();
+        $this->cid = self::RATE_LIMIT_CACHE_PREFIX . str_replace(".", "_", $ip);
+        $this->cacheTag = ['rate_limit_on_ip'];
+        // Do not rate limit the current client ip if the whitelisting is
+        // enabled and the current ip is in the list.
+        $whitelists = $this->getWhiteListedIps();
+        if (!empty($whitelists) && in_array($ip, $whitelists)) {
+          // Early return so the rate limiter services will not be called.
+          return FALSE;
+        }
+        break;
+    }
+    // Get the bucket that was previously set.
+    $this->bucket = $this->getBucket();
+    // Fill the bucket.
+    $this->fillBucket();
+    // Save the bucket.
+    $this->saveBucket();
+    // Return the status if the bucket is at capacity or overflowing.
+    return $this->isOverflowing();
   }
 
   /**
    * {@inheritdoc}
    */
   public function respond() {
-
+    $type = $this->acceptType($this->request->headers);
+    $custom_message = $this->rateLimitingConfig->get('message');
+    $message = 'Too many requests';
+    if (!empty($custom_message)) {
+      $message = $custom_message;
+    }
+    // Set the retry after header.
+    $retry = $this->bucket['bucket_flush_time'] - $this->bucket['request_time'];
+    $headers = ['Retry-After' => $retry];
+    // If request header requested for JSON data then respond with JSON.
+    if (in_array($type, ['json', 'hal_json'])) {
+      return new JsonResponse(['message' => $message], Response::HTTP_TOO_MANY_REQUESTS, $headers);
+    }
+    else {
+      return new Response($message, Response::HTTP_TOO_MANY_REQUESTS, $headers);
+    }
   }
 
   /**
-   * Returns the user defined query string which will be used to determine a service request.
+   * Method fills the bucket.
+   *
+   * If the bucket doesn't have more capacity then it is marked as overflown.
+   */
+  protected function fillBucket() {
+    // If the bucket is empty then fill with the first drop and update the
+    // bucket leaking time. Once the leaking time is reached then the bucket
+    // will be empty.
+    $this->bucket['drops'] = $this->bucket['drops'] ?: 0;
+    $this->bucket['drops']++;
+    $request_time = time();
+    $this->bucket['request_time'] = $request_time;
+    $this->bucket['bucket_flush_time'] = $this->bucket['bucket_flush_time'] ?: $request_time + (int) $this->rateLimitingConfig->get('time_cap');
+    // If the bucket flush time is lapsed then reset the counter.
+    if ($this->bucket['request_time'] > $this->bucket['bucket_flush_time']) {
+      $this->bucket['drops'] = 1;
+      $this->bucket['bucket_flush_time'] = $request_time + (int) $this->rateLimitingConfig->get('time_cap');
+    }
+    // Once the bucket data is stored, check if it's overflowing or not.
+    $allowed_drops = $this->rateLimitingConfig->get('requests');
+    if ($this->bucket['drops'] > $allowed_drops && $this->bucket['request_time'] < $this->bucket['bucket_flush_time']) {
+      $this->overflowing = TRUE;
+    }
+  }
+
+  /**
+   * Saves the bucket information in Drupal's caching system.
+   */
+  protected function saveBucket() {
+    \Drupal::cache(self::RATE_LIMIT_CACHE_BIN)->set($this->cid, $this->bucket, CacheBackendInterface::CACHE_PERMANENT, $this->cacheTag);
+  }
+
+  /**
+   * Denotes if the bucket is overflowing or not.
+   *
+   * @return bool
+   *   If the current bucket is overflowing or not.
+   */
+  protected function isOverflowing() {
+    return $this->overflowing;
+  }
+
+  /**
+   * Method returns the whitelisted IPs.
    *
    * @return array
+   *   Returns any white listed IPs.
    */
-  private function getQueryStringOption() {
+  protected function getWhiteListedIps() {
+    return array_map('trim', array_filter(explode(PHP_EOL, unserialize($this->rateLimitingConfig->get('whitelist')))));
+  }
+
+  /**
+   * Method returns the current bucket.
+   *
+   * @return array
+   *   The current bucket.
+   */
+  protected function getBucket() {
+    if ($cached = \Drupal::cache(self::RATE_LIMIT_CACHE_BIN)->get($this->cid)) {
+      return $cached->data;
+    }
+    return [];
+  }
+
+  /**
+   * Method scans the Accept header present in Request header.
+   *
+   * @param \Symfony\Component\HttpFoundation\HeaderBag $header
+   *   The request header instance.
+   *
+   * @return string
+   *   The accept header type.
+   */
+  protected function acceptType(HeaderBag $header) {
+    $type = NULL;
+    $accept = AcceptHeader::fromString($header->get('Accept'));
+    foreach (self::allowedAcceptTypes() as $header => $name) {
+      if ($accept->has($header)) {
+        $type = $name;
+        break;
+      }
+    }
+    return $type;
+  }
+
+  /**
+   * User defined query string to determine a service request.
+   *
+   * @return array
+   *   Returns an associative array containing the format and value.
+   */
+  protected function getQueryStringOption() {
     $data = [];
     $selected = $this->rateLimitingConfig->get('override_default_types');
     switch ($selected) {
@@ -191,11 +323,13 @@ class RateLimitManager implements RateLimitManagerInterface {
         // If nothing selected then we'll use '_format'.
         $data = [
           'key' => '_format',
-          'values' => $this->default_format
+          'values' => $this->defaultFormat,
         ];
         break;
+
       case 'query_string':
-        // User has selected a custom format. So we have to parse and then return.
+        // User has selected a custom format.
+        // So we have to parse and then return.
         $input = explode("=", $this->rateLimitingConfig->get('query_string'));
         $data = [
           'key' => $input[0],
@@ -209,11 +343,13 @@ class RateLimitManager implements RateLimitManagerInterface {
   /**
    * Checks if a request is a service request or not based on URL.
    *
-   * @param Request $request
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   The incoming HTTP request.
    *
    * @return bool
+   *   Returns either TRUE or FALSE based on query string match.
    */
-  private function validateOnQueryString(Request $request) {
+  protected function validateOnQueryString(Request $request) {
     $qsKey = $this->getQueryStringOption()['key'];
     $qsValues = $this->getQueryStringOption()['values'];
     if (($request->query->has($qsKey))) {
@@ -225,25 +361,69 @@ class RateLimitManager implements RateLimitManagerInterface {
     return FALSE;
   }
 
-  private function validateOnAcceptTypes(Request $request) {
+  /**
+   * Merthod determines a service request on HTTP header value.
+   *
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   The incoming HTTP request.
+   *
+   * @return bool
+   *   Returns either TRUE or FALSE based on header match.
+   */
+  protected function validateOnHeaderTypes(Request $request) {
+    $request_headers = $request->headers;
+    // Return on 'text/html'.
+    $accept = AcceptHeader::fromString($request_headers->get('Accept'));
+    if ((string) $accept->filter('/\btext\/\b/')->first() == 'text/html') {
+      return FALSE;
+    }
 
+    // What option is selected?
+    $selectedType = $this->rateLimitingConfig->get('request_header_type');
+    if ($selectedType == 'custom') {
+      // User selected 'Custom' so only check for this header.
+      $header_name = $this->rateLimitingConfig->get('request_header_name');
+      $header_value = $this->rateLimitingConfig->get('request_header_value');
+      $actual_value = trim($request_headers->get($header_name));
+      // Only a single value can be given at this moment.
+      if ($header_value == $actual_value) {
+        return TRUE;
+      }
+      else {
+        return FALSE;
+      }
+    }
+    elseif ($selectedType == 'accept') {
+      // Using default Accept header, merge with the default value.
+      $header_value = $this->rateLimitingConfig->get('request_header_value');
+      $actual_value = trim($request_headers->get('Accept'));
+      $headers = array_merge(array_keys(self::allowedAcceptTypes()), [$header_value]);
+      if (in_array($actual_value, $headers)) {
+        return TRUE;
+      }
+      else {
+        return FALSE;
+      }
+    }
   }
 
   /**
-   * If the Content type header returns 'application/json' or anything similar,
-   * then the request is a service request.
+   * Determine a service request on HTTP Content type header.
    *
-   * @param Request $request
-   * 
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   Incoming HTTP header.
+   *
    * @return bool
+   *   Returns TRUE or FALSE based on content-type header.
    */
-  private function validateOnContentTypes(Request $request) {
+  protected function validateOnContentTypes(Request $request) {
     $allowed = array_keys(self::allowedAcceptTypes());
     array_pop($allowed);
-    $contentType = $request->headers->get('content-type', null);
+    $contentType = $request->headers->get('content-type', NULL);
     if (in_array($contentType, $allowed)) {
       return TRUE;
     }
     return FALSE;
   }
+
 }

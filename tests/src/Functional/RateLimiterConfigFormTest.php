@@ -2,19 +2,18 @@
 
 namespace Drupal\Tests\rate_limiter\Functional;
 
-use Drupal\Core\Url;
 use Drupal\Tests\BrowserTestBase;
 
 /**
  * Ensure that the Rate Limiting configuration form works properly.
- * 
+ *
  * @group rate_limiter
  */
 class RateLimiterConfigFormTest extends BrowserTestBase {
-  
+
   /**
    * The modules.
-   * 
+   *
    * @var array
    */
   protected static $modules = ['node', 'rest', 'serialization', 'rate_limiter'];
@@ -37,6 +36,9 @@ class RateLimiterConfigFormTest extends BrowserTestBase {
     ]);
   }
 
+  /**
+   * Method initiates all the functional tests.
+   */
   public function testFunctional() {
     $this->drupalLogin($this->adminUser);
     $this->doRateLimitConfigPageVisit();
@@ -46,7 +48,7 @@ class RateLimiterConfigFormTest extends BrowserTestBase {
   }
 
   /**
-   * Checks if the configuration page is accessible for the user with the given permission. 
+   * Checks if the configuration page is accessible.
    */
   public function doRateLimitConfigPageVisit() {
     $this->drupalGet('/admin/config/services/rate-limiter');
@@ -55,8 +57,6 @@ class RateLimiterConfigFormTest extends BrowserTestBase {
 
   /**
    * Tests the basic form validation.
-   *
-   * @return void
    */
   public function doRateLimitBasicFormPost() {
     // Post the form.
@@ -66,7 +66,7 @@ class RateLimiterConfigFormTest extends BrowserTestBase {
       'time_cap' => '',
     ];
     $this->drupalPostForm('/admin/config/services/rate-limiter', $edit, 'Save configuration');
-    
+
     // Test the two form errors.
     $this->assertSession()->pageTextContains('Allowed Requests field is required.');
     $this->assertSession()->pageTextContains('Allowed time window field is required.');
@@ -74,8 +74,6 @@ class RateLimiterConfigFormTest extends BrowserTestBase {
 
   /**
    * Tests the advanced form - query string field validation.
-   *
-   * @return void
    */
   public function doRateLimitQueryStringFieldTest() {
     $edit = [
@@ -88,8 +86,6 @@ class RateLimiterConfigFormTest extends BrowserTestBase {
 
   /**
    * Tests the advanced form - query string field validation.
-   *
-   * @return void
    */
   public function doRateLimitHeaderRuleTest() {
     $edit = [
@@ -111,4 +107,5 @@ class RateLimiterConfigFormTest extends BrowserTestBase {
     $this->assertSession()->pageTextContains('If Request Header Type option is selected, then Request Header Name can\'t be blank.');
     $this->assertSession()->pageTextContains('If Request Header Type option is selected, then Request Header Value can\'t be blank.');
   }
+
 }

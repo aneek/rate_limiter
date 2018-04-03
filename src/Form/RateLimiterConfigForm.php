@@ -153,9 +153,9 @@ class RateLimiterConfigForm extends ConfigFormBase {
     $form['advanced_settings']['override_default_types'] = [
       '#type' => 'select',
       '#title' => $this->t('Override API Service Call determination rule'),
-      '#description' => $this->t('This module checks for URL Query string %qs or Accept Headers like %ach in HTTP Request to determine whether this is an API related request or nornal Drupal\'s call. However, this rule can be modified by checking this option. This will merge the existing rules with the new custom added rules.', [
+      '#description' => $this->t("This module checks for URL Query string %qs or Accept Headers like %ach in HTTP Request to determine whether this is an API related request or nornal Drupal's call. However, this rule can be modified by checking this option. This will merge the existing rules with the new custom added rules.", [
         '%qs' => '_format=hal_json',
-        '%ach' => implode(', ', array_keys(RateLimitManager::allowedAcceptTypes()))
+        '%ach' => implode(', ', array_keys(RateLimitManager::allowedAcceptTypes())),
       ]),
       '#options' => [
         'none' => $this->t('Use Default'),
@@ -180,10 +180,10 @@ class RateLimiterConfigForm extends ConfigFormBase {
     $form['advanced_settings']['request_header_type'] = [
       '#type' => 'select',
       '#title' => $this->t('Request Header Type'),
-      '#description' => $this->t('The HTTP Request header\'s type'),
+      '#description' => $this->t("The HTTP Request header's type"),
       '#options' => [
         'accept' => $this->t('Accept'),
-        'other' => $this->t('Other')
+        'custom' => $this->t('Custom'),
       ],
       '#default_value' => $rate_limiter_config->get('request_header_type'),
       '#states' => [
@@ -196,13 +196,13 @@ class RateLimiterConfigForm extends ConfigFormBase {
     $form['advanced_settings']['request_header_name'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Request Header Name'),
-      '#description' => $this->t('The HTTP Request header\'s name'),
+      '#description' => $this->t("The HTTP Request header's name"),
       '#default_value' => $rate_limiter_config->get('request_header_name'),
       '#placeholder' => 'Foobar',
       '#states' => [
         'visible' => [
           ':input[name="override_default_types"]' => ['value' => 'request_header'],
-          ':input[name="request_header_type"]' => ['value' => 'other'],
+          ':input[name="request_header_type"]' => ['value' => 'custom'],
         ],
       ],
     ];
@@ -210,7 +210,7 @@ class RateLimiterConfigForm extends ConfigFormBase {
     $form['advanced_settings']['request_header_value'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Request Header Value'),
-      '#description' => $this->t('The HTTP Request header\'s value to check for'),
+      '#description' => $this->t("The HTTP Request header's value to check for"),
       '#default_value' => $rate_limiter_config->get('request_header_value'),
       '#placeholder' => 'application/json',
       '#states' => [
@@ -246,26 +246,29 @@ class RateLimiterConfigForm extends ConfigFormBase {
       }
     }
 
-    // If API Service Call determination rule added, then there should be validation.
+    // If API Service Call determination rule added, then there should be
+    // a validation.
     $override_settings = $form_state->getValue('override_default_types');
     switch ($override_settings) {
       case 'query_string':
-        // Query string validation is simple, only check for 'Query String' field.
+        // Query string validation is simple, only check for
+        // 'Query String' field.
         if (empty(trim($form_state->getValue('query_string')))) {
-          $form_state->setErrorByName('query_string', $this->t('If Query String option is selected, then Query String can\'t be blank.'));
+          $form_state->setErrorByName('query_string', $this->t("If Query String option is selected, then Query String can't be blank."));
         }
         break;
 
       case 'request_header':
-        // Two options are available here. If default 'Accept' header is there, then validate single box else validate two.
+        // Two options are available here. If default 'Accept'
+        // header is there, then validate single box else validate two.
         $request_header_type = $form_state->getValue('request_header_type');
         if ($request_header_type != 'accept') {
           if (empty(trim($form_state->getValue('request_header_name')))) {
-            $form_state->setErrorByName('request_header_name', $this->t('If Request Header Type option is selected, then Request Header Name can\'t be blank.'));
+            $form_state->setErrorByName('request_header_name', $this->t("If Request Header Type option is selected, then Request Header Name can't be blank."));
           }
         }
         if (empty(trim($form_state->getValue('request_header_value')))) {
-          $form_state->setErrorByName('request_header_value', $this->t('If Request Header Type option is selected, then Request Header Value can\'t be blank.'));
+          $form_state->setErrorByName('request_header_value', $this->t("If Request Header Type option is selected, then Request Header Value can't be blank."));
         }
         break;
     }
@@ -275,7 +278,8 @@ class RateLimiterConfigForm extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    // Get the previous value, and if that was set, and now it's 0 then reset all fields.
+    // Get the previous value, and if that was set, and now it's 0
+    // then reset all fields.
     $was_set = $this->config($this->configName)->get('enable');
     $new_value = $form_state->getValue('enable');
     if ($was_set == 1 && $new_value == 0) {

@@ -62,8 +62,8 @@ The following points were assumed while developing the module.
 
 1. Every Web-service call either have "Accept" header or "_format" query string.
 2. The Rate Limiting service will only work on requests with 
-"application/json", "application/xml" and "application/hal+json" `Accept` headers
-or `_format` query string with "json", "hal_json" and "xml" values.
+"application/json", "application/xml" and "application/hal+json" `Accept`
+headers or `_format` query string with "json", "hal_json" and "xml" values.
 3. Command line requests and "text/html" requests are considered as normal
 drupal requests to the site not as Service calls.
 
@@ -88,5 +88,5 @@ Assumed that in a production environment caches are not cleared more often.
 ------------------
 * 8.x-1.0 - Initial version created.
 * 8.x-1.1 - Improvements over "Accept header based routing".
-  * Based on [#2501221](https://www.drupal.org/node/2501221) now supports `_format` to determine a service request
-    and Response.
+  * Based on [#2501221](https://www.drupal.org/node/2501221) now 
+    supports `_format` to determine a service request and Response.
