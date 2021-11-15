@@ -7,14 +7,14 @@
 
 namespace Drupal\rate_limiter\Tests;
 
-use Drupal\simpletest\WebTestBase;
+use Drupal\Tests\BrowserTestBase;
 
 /**
  * Integration test class for the Rate Limiter module.
  *
  * @group rate_limiter
  */
-class RateLimiterTest extends WebTestBase {
+class RateLimiterTest extends BrowserTestBase {
 
   /**
    * The necessary modules.
